@@ -24,13 +24,13 @@ defmodule ExBanking do
   def create_user(_), do: {:error, :wrong_arguments}
 
 
-  def deposit(user, amount, currency) when string_valid(user) and is_number(amount) and string_valid(currency) do
+  def deposit(user, amount, currency) when string_valid(user) and is_number(amount) and amount > 0 and string_valid(currency) do
     GenServer.call(__MODULE__, {:deposit, %{user: user, amount: amount, currency: currency}})
   end
 
   def deposit(_,_,_), do: {:error, :wrong_arguments}
 
-  def withdraw(user, amount, currency) when string_valid(user) and is_number(amount) and string_valid(currency) do
+  def withdraw(user, amount, currency) when string_valid(user) and is_number(amount) and amount > 0 and string_valid(currency) do
     GenServer.call(__MODULE__, {:withdraw, %{user: user, amount: amount, currency: currency}})
   end
 
@@ -42,7 +42,7 @@ defmodule ExBanking do
 
   def get_balance(_,_), do: {:error, :wrong_arguments}
 
-  def send(from_user, to_user, amount, currency) when string_valid(from_user) and string_valid(to_user) and is_number(amount) and string_valid(currency)do
+  def send(from_user, to_user, amount, currency) when string_valid(from_user) and string_valid(to_user) and is_number(amount) and amount > 0 and string_valid(currency)do
     GenServer.call(__MODULE__, {:send, %{from_user: from_user, to_user: to_user, amount: amount, currency: currency}})
   end
 
