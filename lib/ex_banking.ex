@@ -19,14 +19,16 @@ defmodule ExBanking do
 
 
   def create_user(user) when string_valid(user) do
-    GenServer.call(__MODULE__, {:create_user, user})
+    if byte_size(String.trim(user)) > 0, do: GenServer.call(__MODULE__, {:create_user, user}), else: {:error, :wrong_arguments}
   end
 
   def create_user(_), do: {:error, :wrong_arguments}
 
 
   def deposit(user, amount, currency) when string_valid(user) and amount_valid(amount) and string_valid(currency) do
-    GenServer.call(__MODULE__, {:deposit, %{user: user, amount: amount, currency: currency}})
+    if byte_size(String.trim(user)) > 0 and byte_size(String.trim(currency)) > 0,
+      do: GenServer.call(__MODULE__, {:deposit, %{user: user, amount: amount, currency: currency}}),
+      else: {:error, :wrong_arguments}
   end
 
   def deposit(_,_,_), do: {:error, :wrong_arguments}
