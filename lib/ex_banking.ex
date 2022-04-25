@@ -14,7 +14,8 @@ defmodule ExBanking do
 #-------------------------  Client ---------------------------------
 #-------------------------         ----------------------------------
 
-  defguard string_valid(value) when is_binary(value) and byte_size(String.trim(value)) > 0
+  defguard string_valid(value) when is_binary(value) and byte_size(value) > 0
+  defguard amount_valid(value) when is_number(value) and value > 0
 
 
   def create_user(user) when string_valid(user) do
@@ -24,13 +25,13 @@ defmodule ExBanking do
   def create_user(_), do: {:error, :wrong_arguments}
 
 
-  def deposit(user, amount, currency) when string_valid(user) and is_number(amount) and amount > 0 and string_valid(currency) do
+  def deposit(user, amount, currency) when string_valid(user) and amount_valid(amount) and string_valid(currency) do
     GenServer.call(__MODULE__, {:deposit, %{user: user, amount: amount, currency: currency}})
   end
 
   def deposit(_,_,_), do: {:error, :wrong_arguments}
 
-  def withdraw(user, amount, currency) when string_valid(user) and is_number(amount) and amount > 0 and string_valid(currency) do
+  def withdraw(user, amount, currency) when string_valid(user) and amount_valid(amount) and string_valid(currency) do
     GenServer.call(__MODULE__, {:withdraw, %{user: user, amount: amount, currency: currency}})
   end
 
@@ -42,7 +43,9 @@ defmodule ExBanking do
 
   def get_balance(_,_), do: {:error, :wrong_arguments}
 
-  def send(from_user, to_user, amount, currency) when string_valid(from_user) and string_valid(to_user) and is_number(amount) and amount > 0 and string_valid(currency)do
+
+  #Assuming that from_user != to_user (Scenario not taken care of)
+  def send(from_user, to_user, amount, currency) when string_valid(from_user) and string_valid(to_user) and amount_valid(amount) and string_valid(currency)do
     GenServer.call(__MODULE__, {:send, %{from_user: from_user, to_user: to_user, amount: amount, currency: currency}})
   end
 
@@ -73,10 +76,10 @@ defmodule ExBanking do
       cond do
         user_has_currency?(user_currencies(state, user), currency) ->
           new_amount =  state[user][currency] + amount
-          {:reply, :ok ,update_user_balance(state, user ,currency, new_amount)}
+          {:reply, {:ok, to_2_decimal_precision(new_amount) } ,update_user_balance(state, user ,currency, new_amount)}
 
          true ->
-          {:reply, :ok , update_user_balance(state, user, currency, amount)}
+          {:reply, {:ok, to_2_decimal_precision(amount)} , update_user_balance(state, user, currency, amount)}
       end
     else
       {:reply, {:error, :user_does_not_exist}, state}
@@ -98,7 +101,7 @@ defmodule ExBanking do
         user_has_currency?(user_currencies(state, user), currency) &&  state[user][currency] > amount ->
 
           new_balance = state[user][currency] - amount
-          {:reply, {:ok, new_balance } ,update_user_balance(state, user ,currency, new_balance)}
+          {:reply, {:ok, to_2_decimal_precision(new_balance) } ,update_user_balance(state, user ,currency, new_balance)}
 
         user_has_currency?(user_currencies(state, user), currency) &&  state[user][currency] < amount ->
           {:reply, {:error, :not_enough_money  } , state}
@@ -124,7 +127,7 @@ defmodule ExBanking do
       cond do
         user_has_currency?(user_currencies(state, user), currency) ->
 
-          {:reply, {:ok, user_balance(user_currencies(state, user), currency)} , state}
+          {:reply, {:ok, user_balance(user_currencies(state, user), currency) |> to_2_decimal_precision} , state}
 
          true ->
           {:reply, {:ok, 0} , state}
@@ -151,7 +154,7 @@ defmodule ExBanking do
         if user_has_currency?(user_currencies(state, to_user), currency), do:  state[to_user][currency] + amount, else: amount
 
 
-      {:reply, {:ok, sender_new_balance, receiver_new_balance } , update_user_balance(state, from_user, sender_new_balance, to_user, receiver_new_balance ,currency)}
+      {:reply, {:ok, to_2_decimal_precision(sender_new_balance), to_2_decimal_precision(receiver_new_balance) } , update_user_balance(state, from_user, sender_new_balance, to_user, receiver_new_balance ,currency)}
 
     else
       {:error, :from_user_does_not_exist} ->
@@ -172,7 +175,15 @@ defmodule ExBanking do
   #--------------------- Private Utility/Helper functions ----------------------------------
   #--------------------                                   ----------------------------------
 
-
+  defp to_2_decimal_precision(amount) do
+    cond do
+    is_float(amount) ->
+            {value, _} =  :erlang.float_to_binary(amount, decimals: 2) |> Float.parse
+             value
+    true ->
+       amount
+    end
+  end
   defp user_exist?(state, user), do: Map.has_key?(state, user)
 
   defp user_exist?(state, from_user, to_user) do
