@@ -67,10 +67,7 @@ defmodule ExBanking do
 
   def handle_call({:deposit, transaction }, _from, state) do
 
-    IO.puts " user depositing........"
-    IO.inspect transaction
-    IO.puts "current state of the user(depositing)..........."
-    IO.inspect state
+
     %{user: user, amount: amount, currency: currency} = transaction
 
     if user_exist?(state, user) do
@@ -91,10 +88,7 @@ defmodule ExBanking do
 
 
   def handle_call({:withdraw, transaction}, _from, state) do
-    IO.puts " user withdrawing........"
-    IO.inspect transaction
-    IO.puts "current state of the user(withdrawing)..........."
-    IO.inspect state
+
 
     %{user: user, amount: amount, currency: currency} = transaction
 
@@ -119,10 +113,7 @@ defmodule ExBanking do
 
 
   def handle_call({:get_balance, transaction}, _from, state) do
-    IO.puts " user balance........"
-    IO.inspect transaction
-    IO.puts "current state of the user (balance)..........."
-    IO.inspect state
+
     %{user: user,  currency: currency} = transaction
 
     if user_exist?(state, user) do
@@ -141,10 +132,6 @@ defmodule ExBanking do
 
 
   def handle_call({:send, transaction}, _from, state) do
-    IO.puts " user sending........"
-    IO.inspect transaction
-    IO.puts "current state of the user(withdrawing)..........."
-    IO.inspect state
 
     %{from_user: from_user, to_user: to_user, amount: amount, currency: currency} = transaction
 
@@ -220,3 +207,7 @@ end
 # Datastructure
 #  %{"chinedu" => %{"NGN" => 0.0, "USD" => 0.0}}
 #  %{user => %{currency => balance, currency => balance}}
+#IO.puts " user depositing........"
+#IO.inspect transaction
+#IO.puts "current state of the user(depositing)..........."
+#IO.inspect state
